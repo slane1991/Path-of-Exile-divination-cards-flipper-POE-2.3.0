@@ -38,6 +38,30 @@ from gui.styles import (
     get_update_message,
     TAB_STYLE,
     TABLE_HEADER_STYLE,
+    CYBERPUNK_MAIN_WINDOW,
+    CYBERPUNK_HEADER_LABEL,
+    CYBERPUNK_TAB_STYLE,
+    CYBERPUNK_TABLE_WIDGET,
+    CYBERPUNK_TABLE_HEADER,
+    CYBERPUNK_BUTTON,
+    OCCULT_MAIN_WINDOW,
+    OCCULT_HEADER_LABEL,
+    OCCULT_TAB_STYLE,
+    OCCULT_TABLE_WIDGET,
+    OCCULT_TABLE_HEADER,
+    OCCULT_BUTTON,
+    BLACK_PURPLE_MAIN_WINDOW,
+    BLACK_PURPLE_HEADER_LABEL,
+    BLACK_PURPLE_TAB_STYLE,
+    BLACK_PURPLE_TABLE_WIDGET,
+    BLACK_PURPLE_TABLE_HEADER,
+    BLACK_PURPLE_BUTTON,
+    CYBERPUNK_DARK_MAIN_WINDOW,
+    CYBERPUNK_DARK_HEADER_LABEL,
+    CYBERPUNK_DARK_TAB_STYLE,
+    CYBERPUNK_DARK_TABLE_WIDGET,
+    CYBERPUNK_DARK_TABLE_HEADER,
+    CYBERPUNK_DARK_BUTTON,
 )
 from poeNinja.ninjaAPI import PoeNinja
 from utils.utils import Utils
@@ -64,7 +88,12 @@ class MainWindow(QMainWindow):
         self._setup_ui()
         self._setup_animation_timers()
         self._setup_connections()
-        self.setStyleSheet(MAIN_WINDOW + TAB_STYLE + TABLE_HEADER_STYLE)
+        self.setStyleSheet(
+            CYBERPUNK_DARK_MAIN_WINDOW +
+            CYBERPUNK_DARK_TAB_STYLE +
+            CYBERPUNK_DARK_TABLE_WIDGET +
+            CYBERPUNK_DARK_TABLE_HEADER
+        )
 
     def _setup_ui(self) -> None:
         """Initialize all UI components."""
@@ -110,7 +139,7 @@ class MainWindow(QMainWindow):
         self.div_tab = QWidget()
         self.div_tab_layout = QVBoxLayout(self.div_tab)
         self.div_start_button = QPushButton("Run Divination Card Flipper")
-        self.div_start_button.setStyleSheet(START_BUTTON)
+        self.div_start_button.setStyleSheet(CYBERPUNK_DARK_BUTTON)
         self.div_table = QTableWidget()
         self.div_tab_layout.addWidget(self.div_start_button)
         self.div_tab_layout.addWidget(self.div_table)
@@ -120,7 +149,7 @@ class MainWindow(QMainWindow):
         self.essence_tab = QWidget()
         self.essence_tab_layout = QVBoxLayout(self.essence_tab)
         self.essence_flipper_button = QPushButton("Run Essence Flipper")
-        self.essence_flipper_button.setStyleSheet(START_BUTTON)
+        self.essence_flipper_button.setStyleSheet(CYBERPUNK_DARK_BUTTON)
         self.essence_table = QTableWidget()
         self.essence_tab_layout.addWidget(self.essence_flipper_button)
         self.essence_tab_layout.addWidget(self.essence_table)
@@ -130,7 +159,7 @@ class MainWindow(QMainWindow):
         self.awakened_tab = QWidget()
         self.awakened_tab_layout = QVBoxLayout(self.awakened_tab)
         self.awakened_gem_flipper_button = QPushButton("Run Awakened Gem Flipper")
-        self.awakened_gem_flipper_button.setStyleSheet(START_BUTTON)
+        self.awakened_gem_flipper_button.setStyleSheet(CYBERPUNK_DARK_BUTTON)
         self.awakened_table = QTableWidget()
         self.awakened_tab_layout.addWidget(self.awakened_gem_flipper_button)
         self.awakened_tab_layout.addWidget(self.awakened_table)
@@ -140,7 +169,7 @@ class MainWindow(QMainWindow):
         self.alt_tab = QWidget()
         self.alt_tab_layout = QVBoxLayout(self.alt_tab)
         self.alt_gem_flipper_button = QPushButton("Run Alt Quality Gem Flipper")
-        self.alt_gem_flipper_button.setStyleSheet(START_BUTTON)
+        self.alt_gem_flipper_button.setStyleSheet(CYBERPUNK_DARK_BUTTON)
         self.alt_table = QTableWidget()
         self.alt_tab_layout.addWidget(self.alt_gem_flipper_button)
         self.alt_tab_layout.addWidget(self.alt_table)
@@ -169,7 +198,7 @@ class MainWindow(QMainWindow):
     def _create_header(self) -> None:
         """Create the header widget."""
         self.header = QLabel(HEADER)
-        self.header.setStyleSheet(HEADER_LABEL)
+        self.header.setStyleSheet(CYBERPUNK_DARK_HEADER_LABEL)
 
     def _create_table(self) -> None:
         """Create and configure the main table widget."""
@@ -538,8 +567,16 @@ class MainWindow(QMainWindow):
             self.essence_table.setItem(row, 0, QTableWidgetItem(flip["essence_type"]))
             self.essence_table.setItem(row, 1, QTableWidgetItem(f"{flip['shrieking_value']:.2f}"))
             self.essence_table.setItem(row, 2, QTableWidgetItem(f"{flip['deafening_value']:.2f}"))
-            self.essence_table.setItem(row, 3, QTableWidgetItem(f"{flip['profit']:.2f}"))
-            self.essence_table.setItem(row, 4, QTableWidgetItem(f"{flip['margin']:.2f}"))
+            profit_item = QTableWidgetItem(f"{flip['profit']:.2f}")
+            margin_item = QTableWidgetItem(f"{flip['margin']:.2f}")
+            if flip['profit'] > 0:
+                profit_item.setForeground(QColor('#bfa046'))
+                margin_item.setForeground(QColor('#bfa046'))
+            elif flip['profit'] < 0:
+                profit_item.setForeground(QColor('#b400a1'))
+                margin_item.setForeground(QColor('#b400a1'))
+            self.essence_table.setItem(row, 3, profit_item)
+            self.essence_table.setItem(row, 4, margin_item)
         self.essence_table.resizeColumnsToContents()
 
     def run_awakened_gem_flipper(self):
