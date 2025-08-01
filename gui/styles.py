@@ -216,3 +216,37 @@ HEADER = """
                 </p>
             </div>
         """
+
+TAB_STYLE = """
+QTabBar::tab {
+    background: #222;
+    color: #e0e0e0;
+    padding: 10px 20px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    font-weight: bold;
+}
+QTabBar::tab:selected {
+    background: #4CAF50;
+    color: #fff;
+}
+QTabBar::tab:!selected {
+    margin-top: 2px;
+}
+QTabWidget::pane {
+    border-top: 2px solid #4CAF50;
+    top: -0.5em;
+}
+"""
+
+TABLE_HEADER_STYLE = """
+QHeaderView::section {
+    background-color: #2d2d2d;
+    color: #f0f0f0;
+    padding: 10px;
+    border: none;
+    font-weight: bold;
+    font-size: 13px;
+    border-bottom: 2px solid #4CAF50;
+}
+"""

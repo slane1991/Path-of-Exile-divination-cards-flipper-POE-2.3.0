@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
+    QTabWidget,
 )
 
 from __version__ import __version__ as version
@@ -35,6 +36,8 @@ from gui.styles import (
     TABLE_WIDGET,
     UPDATE_BUTTON,
     get_update_message,
+    TAB_STYLE,
+    TABLE_HEADER_STYLE,
 )
 from poeNinja.ninjaAPI import PoeNinja
 from utils.utils import Utils
@@ -59,14 +62,15 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.utils = Utils()
         self._setup_ui()
-        self._setup_connections()
         self._setup_animation_timers()
+        self._setup_connections()
+        self.setStyleSheet(MAIN_WINDOW + TAB_STYLE + TABLE_HEADER_STYLE)
 
     def _setup_ui(self) -> None:
         """Initialize all UI components."""
         self._configure_main_window()
-        self._create_widgets()
-        self._setup_layout()
+        self._create_top_bar()
+        self._create_tabs()
         self.setStyleSheet(MAIN_WINDOW)
 
     def _configure_main_window(self) -> None:
@@ -78,33 +82,83 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
 
-    def _create_widgets(self) -> None:
-        """Create all widgets used in the UI."""
-        self._create_header()
-        self._create_table()
-        self._create_controls()
-        self._create_footer()
+    def _create_top_bar(self):
+        """Create the league selector and status label at the top."""
+        self.top_bar = QHBoxLayout()
+        self.league_selector = QComboBox()
+        self.league_selector.addItems(
+            [league["name"] for league in self.utils.get_current_leagues()]
+        )
+        self.league_selector.setStyleSheet(COMBO_BOX)
+        self.status_label = QLabel("Select league")
+        self.status_label.setStyleSheet(STATUS_LABEL)
+        self.top_bar.addWidget(QLabel("League:"))
+        self.top_bar.addWidget(self.league_selector)
+        self.top_bar.addWidget(self.status_label)
+        self.top_bar.addStretch(1)
+        # Add update button to top bar
+        self.update_button = QPushButton("Check for Updates")
+        self.update_button.setStyleSheet(UPDATE_BUTTON)
+        self.top_bar.addWidget(self.update_button)
 
-    def _setup_layout(self) -> None:
-        """Set up the main layout structure."""
+    def _create_tabs(self):
+        """Create the main tab widget and each flipping tab."""
+        self.tabs = QTabWidget()
+        self.tabs.setTabPosition(QTabWidget.TabPosition.North)
+
+        # Divination Cards Tab
+        self.div_tab = QWidget()
+        self.div_tab_layout = QVBoxLayout(self.div_tab)
+        self.div_start_button = QPushButton("Run Divination Card Flipper")
+        self.div_start_button.setStyleSheet(START_BUTTON)
+        self.div_table = QTableWidget()
+        self.div_tab_layout.addWidget(self.div_start_button)
+        self.div_tab_layout.addWidget(self.div_table)
+        self.tabs.addTab(self.div_tab, "Divination Cards")
+
+        # Essence Flipper Tab
+        self.essence_tab = QWidget()
+        self.essence_tab_layout = QVBoxLayout(self.essence_tab)
+        self.essence_flipper_button = QPushButton("Run Essence Flipper")
+        self.essence_flipper_button.setStyleSheet(START_BUTTON)
+        self.essence_table = QTableWidget()
+        self.essence_tab_layout.addWidget(self.essence_flipper_button)
+        self.essence_tab_layout.addWidget(self.essence_table)
+        self.tabs.addTab(self.essence_tab, "Essence Flipper")
+
+        # Awakened Gem Flipper Tab
+        self.awakened_tab = QWidget()
+        self.awakened_tab_layout = QVBoxLayout(self.awakened_tab)
+        self.awakened_gem_flipper_button = QPushButton("Run Awakened Gem Flipper")
+        self.awakened_gem_flipper_button.setStyleSheet(START_BUTTON)
+        self.awakened_table = QTableWidget()
+        self.awakened_tab_layout.addWidget(self.awakened_gem_flipper_button)
+        self.awakened_tab_layout.addWidget(self.awakened_table)
+        self.tabs.addTab(self.awakened_tab, "Awakened Gem Flipper")
+
+        # Alt Quality Gem Flipper Tab
+        self.alt_tab = QWidget()
+        self.alt_tab_layout = QVBoxLayout(self.alt_tab)
+        self.alt_gem_flipper_button = QPushButton("Run Alt Quality Gem Flipper")
+        self.alt_gem_flipper_button.setStyleSheet(START_BUTTON)
+        self.alt_table = QTableWidget()
+        self.alt_tab_layout.addWidget(self.alt_gem_flipper_button)
+        self.alt_tab_layout.addWidget(self.alt_table)
+        self.tabs.addTab(self.alt_tab, "Alt Quality Gem Flipper")
+
+        # Layout for the main window
         main_layout = QVBoxLayout(self.central_widget)
-        main_layout.setContentsMargins(15, 15, 15, 15)
-        main_layout.setSpacing(15)
-        main_layout.addWidget(self.header)
-        main_layout.addWidget(self.table_widget, 1)
-        main_layout.addLayout(self.controls_layout)
-        main_layout.addWidget(self.copy_label)
-        main_layout.addWidget(self.footer)
+        main_layout.addLayout(self.top_bar)
+        main_layout.addWidget(self.tabs)
 
     def _setup_connections(self) -> None:
         """Connect signals to slots."""
-        self.table_widget.cellClicked.connect(self.copy_card_name)
-        self.start_button.clicked.connect(self.process_data)
-        self.update_button.clicked.connect(self.check_for_updates)
-        self.table_widget.cellDoubleClicked.connect(self.generate_trade_link)
+        self.div_start_button.clicked.connect(self.run_div_flipper)
         self.essence_flipper_button.clicked.connect(self.run_essence_flipper)
         self.awakened_gem_flipper_button.clicked.connect(self.run_awakened_gem_flipper)
         self.alt_gem_flipper_button.clicked.connect(self.run_alt_gem_flipper)
+        self.update_button.clicked.connect(self.check_for_updates)
+        # Add more connections as needed for table interactions
 
     def _setup_animation_timers(self) -> None:
         """Initialize animation timers."""
@@ -435,6 +489,35 @@ class MainWindow(QMainWindow):
         trade_url = self.utils.generate_trade_link(item_name, league)
         QDesktopServices.openUrl(QUrl(trade_url))
 
+    # --- Flipper Logic for Each Tab ---
+
+    def run_div_flipper(self):
+        self.status_label.setText("Processing divination card data...")
+        QApplication.processEvents()
+        try:
+            data = self._fetch_and_process_data()
+            if data:
+                self.display_div_flips(data)
+                self.status_label.setText(f"Divination card results for {self.league_selector.currentText()} loaded.")
+        except Exception as e:
+            self.status_label.setText(f"Error: {str(e)}")
+
+    def display_div_flips(self, highscores_sorted):
+        headers = ["Name", "Type", "Profit", "Cost", "Stack", "Profit per card", "Total", "Sell price"]
+        self.div_table.setColumnCount(len(headers))
+        self.div_table.setHorizontalHeaderLabels(headers)
+        self.div_table.setRowCount(len(highscores_sorted))
+        for row, item in enumerate(highscores_sorted):
+            self.div_table.setItem(row, 0, QTableWidgetItem(str(item.get("Name", ""))))
+            self.div_table.setItem(row, 1, QTableWidgetItem(str(item.get("Type", ""))))
+            self.div_table.setItem(row, 2, QTableWidgetItem(str(item.get("Profit", ""))))
+            self.div_table.setItem(row, 3, QTableWidgetItem(str(item.get("Cost", ""))))
+            self.div_table.setItem(row, 4, QTableWidgetItem(str(item.get("Stack", ""))))
+            self.div_table.setItem(row, 5, QTableWidgetItem(str(item.get("Profitpercard", ""))))
+            self.div_table.setItem(row, 6, QTableWidgetItem(str(item.get("Total", ""))))
+            self.div_table.setItem(row, 7, QTableWidgetItem(str(item.get("Sellprice", ""))))
+        self.div_table.resizeColumnsToContents()
+
     def run_essence_flipper(self):
         self.status_label.setText("Fetching essence flipping opportunities...")
         QApplication.processEvents()
@@ -448,17 +531,16 @@ class MainWindow(QMainWindow):
 
     def display_essence_flips(self, flips):
         headers = ["Essence Type", "Shrieking Value", "Deafening Value", "Profit", "Margin (%)"]
-        self.table_widget.setColumnCount(len(headers))
-        self.table_widget.setHorizontalHeaderLabels(headers)
-        self.table_widget.setRowCount(len(flips))
-
+        self.essence_table.setColumnCount(len(headers))
+        self.essence_table.setHorizontalHeaderLabels(headers)
+        self.essence_table.setRowCount(len(flips))
         for row, flip in enumerate(flips):
-            self.table_widget.setItem(row, 0, QTableWidgetItem(flip["essence_type"]))
-            self.table_widget.setItem(row, 1, QTableWidgetItem(f"{flip['shrieking_value']:.2f}"))
-            self.table_widget.setItem(row, 2, QTableWidgetItem(f"{flip['deafening_value']:.2f}"))
-            self.table_widget.setItem(row, 3, QTableWidgetItem(f"{flip['profit']:.2f}"))
-            self.table_widget.setItem(row, 4, QTableWidgetItem(f"{flip['margin']:.2f}"))
-        self.table_widget.resizeColumnsToContents()
+            self.essence_table.setItem(row, 0, QTableWidgetItem(flip["essence_type"]))
+            self.essence_table.setItem(row, 1, QTableWidgetItem(f"{flip['shrieking_value']:.2f}"))
+            self.essence_table.setItem(row, 2, QTableWidgetItem(f"{flip['deafening_value']:.2f}"))
+            self.essence_table.setItem(row, 3, QTableWidgetItem(f"{flip['profit']:.2f}"))
+            self.essence_table.setItem(row, 4, QTableWidgetItem(f"{flip['margin']:.2f}"))
+        self.essence_table.resizeColumnsToContents()
 
     def run_awakened_gem_flipper(self):
         self.status_label.setText("Fetching awakened gem flipping opportunities...")
@@ -473,18 +555,17 @@ class MainWindow(QMainWindow):
 
     def display_awakened_gem_flips(self, flips):
         headers = ["Gem", "Level 1 Value", "Level 5 Value", "Beast Cost", "Profit", "Margin (%)"]
-        self.table_widget.setColumnCount(len(headers))
-        self.table_widget.setHorizontalHeaderLabels(headers)
-        self.table_widget.setRowCount(len(flips))
-
+        self.awakened_table.setColumnCount(len(headers))
+        self.awakened_table.setHorizontalHeaderLabels(headers)
+        self.awakened_table.setRowCount(len(flips))
         for row, flip in enumerate(flips):
-            self.table_widget.setItem(row, 0, QTableWidgetItem(flip["gem"]))
-            self.table_widget.setItem(row, 1, QTableWidgetItem(f"{flip['level1_value']:.2f}"))
-            self.table_widget.setItem(row, 2, QTableWidgetItem(f"{flip['level5_value']:.2f}"))
-            self.table_widget.setItem(row, 3, QTableWidgetItem(f"{flip['beast_cost']:.2f}"))
-            self.table_widget.setItem(row, 4, QTableWidgetItem(f"{flip['profit']:.2f}"))
-            self.table_widget.setItem(row, 5, QTableWidgetItem(f"{flip['margin']:.2f}"))
-        self.table_widget.resizeColumnsToContents()
+            self.awakened_table.setItem(row, 0, QTableWidgetItem(flip["gem"]))
+            self.awakened_table.setItem(row, 1, QTableWidgetItem(f"{flip['level1_value']:.2f}"))
+            self.awakened_table.setItem(row, 2, QTableWidgetItem(f"{flip['level5_value']:.2f}"))
+            self.awakened_table.setItem(row, 3, QTableWidgetItem(f"{flip['beast_cost']:.2f}"))
+            self.awakened_table.setItem(row, 4, QTableWidgetItem(f"{flip['profit']:.2f}"))
+            self.awakened_table.setItem(row, 5, QTableWidgetItem(f"{flip['margin']:.2f}"))
+        self.awakened_table.resizeColumnsToContents()
 
     def run_alt_gem_flipper(self):
         self.status_label.setText("Fetching alternate quality gem flipping opportunities...")
@@ -499,17 +580,16 @@ class MainWindow(QMainWindow):
 
     def display_alt_gem_flips(self, flips):
         headers = ["Base Gem", "Alt Gem", "Gem Level", "Gem Quality", "Base Value", "Alt Value", "Profit", "Margin (%)"]
-        self.table_widget.setColumnCount(len(headers))
-        self.table_widget.setHorizontalHeaderLabels(headers)
-        self.table_widget.setRowCount(len(flips))
-
+        self.alt_table.setColumnCount(len(headers))
+        self.alt_table.setHorizontalHeaderLabels(headers)
+        self.alt_table.setRowCount(len(flips))
         for row, flip in enumerate(flips):
-            self.table_widget.setItem(row, 0, QTableWidgetItem(flip["base"]))
-            self.table_widget.setItem(row, 1, QTableWidgetItem(flip["alt"]))
-            self.table_widget.setItem(row, 2, QTableWidgetItem(str(flip["gem_level"])))
-            self.table_widget.setItem(row, 3, QTableWidgetItem(str(flip["gem_quality"])))
-            self.table_widget.setItem(row, 4, QTableWidgetItem(f"{flip['base_value']:.2f}"))
-            self.table_widget.setItem(row, 5, QTableWidgetItem(f"{flip['alt_value']:.2f}"))
-            self.table_widget.setItem(row, 6, QTableWidgetItem(f"{flip['profit']:.2f}"))
-            self.table_widget.setItem(row, 7, QTableWidgetItem(f"{flip['margin']:.2f}"))
-        self.table_widget.resizeColumnsToContents()
+            self.alt_table.setItem(row, 0, QTableWidgetItem(flip["base"]))
+            self.alt_table.setItem(row, 1, QTableWidgetItem(flip["alt"]))
+            self.alt_table.setItem(row, 2, QTableWidgetItem(str(flip["gem_level"])))
+            self.alt_table.setItem(row, 3, QTableWidgetItem(str(flip["gem_quality"])))
+            self.alt_table.setItem(row, 4, QTableWidgetItem(f"{flip['base_value']:.2f}"))
+            self.alt_table.setItem(row, 5, QTableWidgetItem(f"{flip['alt_value']:.2f}"))
+            self.alt_table.setItem(row, 6, QTableWidgetItem(f"{flip['profit']:.2f}"))
+            self.alt_table.setItem(row, 7, QTableWidgetItem(f"{flip['margin']:.2f}"))
+        self.alt_table.resizeColumnsToContents()
