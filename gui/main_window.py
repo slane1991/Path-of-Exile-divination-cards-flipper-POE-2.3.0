@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(
             f"Path of Exile Card Flipper v{version} | github.com/ezbooz"
         )
-        self.setFixedSize(1070, 700)
+        self.resize(1070, 700)  # Set default size but allow resizing
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
 
@@ -364,7 +364,7 @@ class MainWindow(QMainWindow):
         self.table_widget.setColumnWidth(0, 50)
         self.table_widget.setColumnWidth(1, 55)
         for row in range(self.table_widget.rowCount()):
-            self.table_widget.setRowHeight(row, 25)
+            self.table_widget.setRowHeight(row, 40)
 
     def _populate_table_data(self, data: List[Dict], divine_value: float) -> None:
         """Populate table with processed data."""
@@ -390,7 +390,11 @@ class MainWindow(QMainWindow):
         cost_divine = to_divine(item["Cost"])
 
         # Add items to the row
-        self._create_table_item(row, 0, str(row + 1))
+        # Create the number item with a smaller font
+        number_item = self._create_table_item(row, 0, str(row + 1))
+        font = number_item.font()
+        font.setPointSize(10)
+        number_item.setFont(font)
         self._create_table_item(row, 1, item["Name"], align_left=True)
         self._create_table_item(row, 2, item["Type"], align_left=True)
         self._create_table_item(row, 3, f"{int(item['Profit'])} c ({profit_divine} d)")
