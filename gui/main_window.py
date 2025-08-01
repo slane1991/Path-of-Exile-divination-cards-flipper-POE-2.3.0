@@ -38,6 +38,9 @@ from gui.styles import (
 )
 from poeNinja.ninjaAPI import PoeNinja
 from utils.utils import Utils
+from essence_flipper import get_essence_flips
+from awakened_gem_flipper import get_awakened_gem_flips
+from alt_gem_flipper import get_lab_alt_gem_flips
 
 
 class NoFocusDelegate(QStyledItemDelegate):
@@ -99,6 +102,9 @@ class MainWindow(QMainWindow):
         self.start_button.clicked.connect(self.process_data)
         self.update_button.clicked.connect(self.check_for_updates)
         self.table_widget.cellDoubleClicked.connect(self.generate_trade_link)
+        self.essence_flipper_button.clicked.connect(self.run_essence_flipper)
+        self.awakened_gem_flipper_button.clicked.connect(self.run_awakened_gem_flipper)
+        self.alt_gem_flipper_button.clicked.connect(self.run_alt_gem_flipper)
 
     def _setup_animation_timers(self) -> None:
         """Initialize animation timers."""
@@ -135,6 +141,19 @@ class MainWindow(QMainWindow):
         self._create_status_label()
         self._create_update_button()
         self._create_copy_label()
+
+        # Add flipping buttons
+        self.essence_flipper_button = QPushButton("Essence Flipper")
+        self.essence_flipper_button.setStyleSheet(START_BUTTON)
+        self.controls_layout.addWidget(self.essence_flipper_button)
+
+        self.awakened_gem_flipper_button = QPushButton("Awakened Gem Flipper")
+        self.awakened_gem_flipper_button.setStyleSheet(START_BUTTON)
+        self.controls_layout.addWidget(self.awakened_gem_flipper_button)
+
+        self.alt_gem_flipper_button = QPushButton("Alt Quality Gem Flipper")
+        self.alt_gem_flipper_button.setStyleSheet(START_BUTTON)
+        self.controls_layout.addWidget(self.alt_gem_flipper_button)
 
     def _create_league_selector(self) -> None:
         """Create and populate the league selector combo box."""
@@ -415,3 +434,82 @@ class MainWindow(QMainWindow):
         league = self.league_selector.currentText()
         trade_url = self.utils.generate_trade_link(item_name, league)
         QDesktopServices.openUrl(QUrl(trade_url))
+
+    def run_essence_flipper(self):
+        self.status_label.setText("Fetching essence flipping opportunities...")
+        QApplication.processEvents()
+        league = self.league_selector.currentText()
+        try:
+            results = get_essence_flips(league)
+            self.display_essence_flips(results)
+            self.status_label.setText(f"Essence flipping results for {league} loaded.")
+        except Exception as e:
+            self.status_label.setText(f"Error: {str(e)}")
+
+    def display_essence_flips(self, flips):
+        headers = ["Essence Type", "Shrieking Value", "Deafening Value", "Profit", "Margin (%)"]
+        self.table_widget.setColumnCount(len(headers))
+        self.table_widget.setHorizontalHeaderLabels(headers)
+        self.table_widget.setRowCount(len(flips))
+
+        for row, flip in enumerate(flips):
+            self.table_widget.setItem(row, 0, QTableWidgetItem(flip["essence_type"]))
+            self.table_widget.setItem(row, 1, QTableWidgetItem(f"{flip['shrieking_value']:.2f}"))
+            self.table_widget.setItem(row, 2, QTableWidgetItem(f"{flip['deafening_value']:.2f}"))
+            self.table_widget.setItem(row, 3, QTableWidgetItem(f"{flip['profit']:.2f}"))
+            self.table_widget.setItem(row, 4, QTableWidgetItem(f"{flip['margin']:.2f}"))
+        self.table_widget.resizeColumnsToContents()
+
+    def run_awakened_gem_flipper(self):
+        self.status_label.setText("Fetching awakened gem flipping opportunities...")
+        QApplication.processEvents()
+        league = self.league_selector.currentText()
+        try:
+            results = get_awakened_gem_flips(league)
+            self.display_awakened_gem_flips(results)
+            self.status_label.setText(f"Awakened gem flipping results for {league} loaded.")
+        except Exception as e:
+            self.status_label.setText(f"Error: {str(e)}")
+
+    def display_awakened_gem_flips(self, flips):
+        headers = ["Gem", "Level 1 Value", "Level 5 Value", "Beast Cost", "Profit", "Margin (%)"]
+        self.table_widget.setColumnCount(len(headers))
+        self.table_widget.setHorizontalHeaderLabels(headers)
+        self.table_widget.setRowCount(len(flips))
+
+        for row, flip in enumerate(flips):
+            self.table_widget.setItem(row, 0, QTableWidgetItem(flip["gem"]))
+            self.table_widget.setItem(row, 1, QTableWidgetItem(f"{flip['level1_value']:.2f}"))
+            self.table_widget.setItem(row, 2, QTableWidgetItem(f"{flip['level5_value']:.2f}"))
+            self.table_widget.setItem(row, 3, QTableWidgetItem(f"{flip['beast_cost']:.2f}"))
+            self.table_widget.setItem(row, 4, QTableWidgetItem(f"{flip['profit']:.2f}"))
+            self.table_widget.setItem(row, 5, QTableWidgetItem(f"{flip['margin']:.2f}"))
+        self.table_widget.resizeColumnsToContents()
+
+    def run_alt_gem_flipper(self):
+        self.status_label.setText("Fetching alternate quality gem flipping opportunities...")
+        QApplication.processEvents()
+        league = self.league_selector.currentText()
+        try:
+            results = get_lab_alt_gem_flips(league)
+            self.display_alt_gem_flips(results)
+            self.status_label.setText(f"Alt quality gem flipping results for {league} loaded.")
+        except Exception as e:
+            self.status_label.setText(f"Error: {str(e)}")
+
+    def display_alt_gem_flips(self, flips):
+        headers = ["Base Gem", "Alt Gem", "Gem Level", "Gem Quality", "Base Value", "Alt Value", "Profit", "Margin (%)"]
+        self.table_widget.setColumnCount(len(headers))
+        self.table_widget.setHorizontalHeaderLabels(headers)
+        self.table_widget.setRowCount(len(flips))
+
+        for row, flip in enumerate(flips):
+            self.table_widget.setItem(row, 0, QTableWidgetItem(flip["base"]))
+            self.table_widget.setItem(row, 1, QTableWidgetItem(flip["alt"]))
+            self.table_widget.setItem(row, 2, QTableWidgetItem(str(flip["gem_level"])))
+            self.table_widget.setItem(row, 3, QTableWidgetItem(str(flip["gem_quality"])))
+            self.table_widget.setItem(row, 4, QTableWidgetItem(f"{flip['base_value']:.2f}"))
+            self.table_widget.setItem(row, 5, QTableWidgetItem(f"{flip['alt_value']:.2f}"))
+            self.table_widget.setItem(row, 6, QTableWidgetItem(f"{flip['profit']:.2f}"))
+            self.table_widget.setItem(row, 7, QTableWidgetItem(f"{flip['margin']:.2f}"))
+        self.table_widget.resizeColumnsToContents()
